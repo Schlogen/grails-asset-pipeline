@@ -19,6 +19,8 @@ package asset.pipeline.grails
 import asset.pipeline.AssetPipelineConfigHolder
 import asset.pipeline.fs.FileSystemAssetResolver
 import grails.test.mixin.TestFor
+import org.codehaus.groovy.grails.web.mime.DefaultMimeUtility
+import org.codehaus.groovy.grails.web.mime.MimeType
 import spock.lang.Specification
 
 
@@ -33,6 +35,9 @@ class AssetsTagLibSpec extends Specification {
 
 
 	AssetProcessorService assetProcessorService = new AssetProcessorService()
+	AssetResourceLocator assetResourceLocator = new AssetResourceLocator()
+	DefaultMimeUtility grailsMimeUtility = new DefaultMimeUtility([new MimeType('text/css', 'css')])
+
 
 
 	def setup() {
@@ -45,6 +50,9 @@ class AssetsTagLibSpec extends Specification {
 		assetMethodTagLibMock.assetProcessorService = assetProcessorService
 
 		tagLib.assetProcessorService = assetProcessorService
+		tagLib.assetResourceLocator = assetResourceLocator
+		tagLib.grailsMimeUtility = grailsMimeUtility
+
 	}
 
 	void "should return assetPath"() {
@@ -237,13 +245,13 @@ class AssetsTagLibSpec extends Specification {
 		given:
 			final def fileUri = "asset-pipeline/test/test.css"
 		expect:
-			tagLib.getDataURI(fileUri) == 'data:text/css;base64,000=='
+			tagLib.getDataURI(fileUri) == 'data:text/css;base64,LyoNCio9IHJlcXVpcmVfc2VsZg0KKj0gcmVxdWlyZSB0ZXN0Mg0KKi8NCiNsb2dvIHsNCgliYWNrZ3JvdW5kOiB1cmwoJy4uLy4uL2dyYWlsc19sb2dvLnBuZycpOw0KfQ0KDQovKldlIGhhdmUgYSBzZWNvbmQgaWRlbnRpY2FsIHVybCBjYWxsIHRvIHZlcmlmeSBjYWNoaW5nIGluIGludGVncmF0aW9uIHRlc3QqLw0KLmxvZ28gew0KCWJhY2tncm91bmQ6IHVybCgnLi4vLi4vZ3JhaWxzX2xvZ28ucG5nJyk7DQp9DQoNCi5taWNyb3NvZnQgew0KCWJlaGF2aW9yOiB1cmwoI2RlZmF1bHQjVk1MKTsNCn0KaDMgew0KCWNvbG9yOmJsYWNrOw0KfQo='
 	}
 
 	void "should return expanded contents for asset at the given uri"(){
 		given:
-			final def fileUri = "asset-pipeline/test/test.css"
+			final def css = "url('asset-pipeline/test/test.css')"
 		expect:
-			tagLib.expandInline(fileUri) == ''
+			tagLib.expandInline(css) == "url('data:text/css;base64,LyoNCio9IHJlcXVpcmVfc2VsZg0KKj0gcmVxdWlyZSB0ZXN0Mg0KKi8NCiNsb2dvIHsNCgliYWNrZ3JvdW5kOiB1cmwoJy4uLy4uL2dyYWlsc19sb2dvLnBuZycpOw0KfQ0KDQovKldlIGhhdmUgYSBzZWNvbmQgaWRlbnRpY2FsIHVybCBjYWxsIHRvIHZlcmlmeSBjYWNoaW5nIGluIGludGVncmF0aW9uIHRlc3QqLw0KLmxvZ28gew0KCWJhY2tncm91bmQ6IHVybCgnLi4vLi4vZ3JhaWxzX2xvZ28ucG5nJyk7DQp9DQoNCi5taWNyb3NvZnQgew0KCWJlaGF2aW9yOiB1cmwoI2RlZmF1bHQjVk1MKTsNCn0KaDMgew0KCWNvbG9yOmJsYWNrOw0KfQo=')"
 	}
 }

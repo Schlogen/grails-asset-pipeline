@@ -3,10 +3,11 @@ package asset.pipeline.grails
 
 import asset.pipeline.AssetHelper
 import asset.pipeline.AssetPipeline
-import com.lowagie.text.pdf.codec.Base64
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.grails.web.mime.MimeType
+import org.codehaus.groovy.grails.web.mime.MimeUtility
 import org.codehaus.groovy.grails.web.util.GrailsPrintWriter
+import org.springframework.context.ApplicationContextAware
 import org.springframework.core.io.Resource
 
 
@@ -18,10 +19,10 @@ class AssetsTagLib {
 	private static final LINE_BREAK = System.getProperty('line.separator') ?: '\n'
 
 
-	def assetProcessorService
+	AssetProcessorService assetProcessorService
 	AssetResourceLocator assetResourceLocator
-	def grailsApplication
-	def grailsMimeUtility
+	ApplicationContextAware grailsApplication
+	MimeUtility grailsMimeUtility
 
 
 	/**
@@ -173,11 +174,11 @@ class AssetsTagLib {
 		}
 
 		//if mime is text-like, then expand inline assets
-		if(mime in ['']){
+		if(mime in ['text/css;']){
 			String fileText = expandInline(asset.inputStream.text)
-			"data:${mime?:''}base64,${fileText.encodeBase64()}"
+			"data:${mime?:''}base64,${fileText.bytes.encodeBase64()}"
 		} else {
-			"data:${mime?:''}base64,${asset.inputStream.encodeAsBase64()}"
+			"data:${mime?:''}base64,${asset.inputStream.bytes.encodeAsBase64()}"
 		}
 
 	}
