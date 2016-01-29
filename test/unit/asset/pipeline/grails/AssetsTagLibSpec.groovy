@@ -36,7 +36,10 @@ class AssetsTagLibSpec extends Specification {
 
 	AssetProcessorService assetProcessorService = new AssetProcessorService()
 	AssetResourceLocator assetResourceLocator = new AssetResourceLocator()
-	DefaultMimeUtility grailsMimeUtility = new DefaultMimeUtility([new MimeType('text/css', 'css')])
+	DefaultMimeUtility grailsMimeUtility = new DefaultMimeUtility([
+            new MimeType('text/css',  'css'),
+            new MimeType('image/png', 'png')
+    ])
 
 
 
@@ -255,6 +258,24 @@ class AssetsTagLibSpec extends Specification {
 			String contents = tagLib.expandInline(css)
             contents.startsWith("url('data:text/css;base64,LyoNCio9IHJlcXVpcmVfc2VsZg0KKj0gcmVxdWlyZSB0ZXN0Mg0KKi8")
             //lots more data
-            contents.endsWith("ZGVmYXVsdCNWTUwpOw0KfQpoMyB7DQoJY29sb3I6YmxhY2s7DQp9Cg==')")
+            contents.endsWith("9CmgzIHsNCgljb2xvcjpibGFjazsNCn0K')")
 	}
+
+    void "should return inline script tag"() {
+        given:
+        final def assetSrc = "asset-pipeline/test/test_inline.js"
+        expect:
+        tagLib.inlineJavascript(src: assetSrc).toString() == '<script type="text/javascript">console.log("This should be in a script tag");\n</script>'
+    }
+
+
+    void "should return inline image tag"() {
+        given:
+        final def assetSrc = "grails_logo.png"
+        expect:
+        String content = tagLib.inlineImage(src: assetSrc).toString()
+        content.startsWith('<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKMAAAArCAYAAAFjiAijAAAABGdBTUEAAK')
+        //more data
+        content.endsWith('9oR1nMRqSe5SP8BuRz12PRbUyoAAAAASUVORK5CYII=" />')
+    }
 }
