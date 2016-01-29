@@ -243,15 +243,18 @@ class AssetsTagLibSpec extends Specification {
 
 	void "should return a valid data uri for asset at the given uri"(){
 		given:
-			final def fileUri = "asset-pipeline/test/test.css"
+			final def fileUri = "asset-pipeline/test/test2.css"
 		expect:
-			tagLib.getDataURI(fileUri) == 'data:text/css;base64,LyoNCio9IHJlcXVpcmVfc2VsZg0KKj0gcmVxdWlyZSB0ZXN0Mg0KKi8NCiNsb2dvIHsNCgliYWNrZ3JvdW5kOiB1cmwoJy4uLy4uL2dyYWlsc19sb2dvLnBuZycpOw0KfQ0KDQovKldlIGhhdmUgYSBzZWNvbmQgaWRlbnRpY2FsIHVybCBjYWxsIHRvIHZlcmlmeSBjYWNoaW5nIGluIGludGVncmF0aW9uIHRlc3QqLw0KLmxvZ28gew0KCWJhY2tncm91bmQ6IHVybCgnLi4vLi4vZ3JhaWxzX2xvZ28ucG5nJyk7DQp9DQoNCi5taWNyb3NvZnQgew0KCWJlaGF2aW9yOiB1cmwoI2RlZmF1bHQjVk1MKTsNCn0KaDMgew0KCWNvbG9yOmJsYWNrOw0KfQo='
-	}
+			tagLib.getDataURI(fileUri) == 'data:text/css;base64,aDMgew0KCWNvbG9yOmJsYWNrOw0KfQo='
+    }
 
 	void "should return expanded contents for asset at the given uri"(){
 		given:
 			final def css = "url('asset-pipeline/test/test.css')"
 		expect:
-			tagLib.expandInline(css) == "url('data:text/css;base64,LyoNCio9IHJlcXVpcmVfc2VsZg0KKj0gcmVxdWlyZSB0ZXN0Mg0KKi8NCiNsb2dvIHsNCgliYWNrZ3JvdW5kOiB1cmwoJy4uLy4uL2dyYWlsc19sb2dvLnBuZycpOw0KfQ0KDQovKldlIGhhdmUgYSBzZWNvbmQgaWRlbnRpY2FsIHVybCBjYWxsIHRvIHZlcmlmeSBjYWNoaW5nIGluIGludGVncmF0aW9uIHRlc3QqLw0KLmxvZ28gew0KCWJhY2tncm91bmQ6IHVybCgnLi4vLi4vZ3JhaWxzX2xvZ28ucG5nJyk7DQp9DQoNCi5taWNyb3NvZnQgew0KCWJlaGF2aW9yOiB1cmwoI2RlZmF1bHQjVk1MKTsNCn0KaDMgew0KCWNvbG9yOmJsYWNrOw0KfQo=')"
+			String contents = tagLib.expandInline(css)
+            contents.startsWith("url('data:text/css;base64,LyoNCio9IHJlcXVpcmVfc2VsZg0KKj0gcmVxdWlyZSB0ZXN0Mg0KKi8")
+            //lots more data
+            contents.endsWith("ZGVmYXVsdCNWTUwpOw0KfQpoMyB7DQoJY29sb3I6YmxhY2s7DQp9Cg==')")
 	}
 }

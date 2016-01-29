@@ -188,7 +188,7 @@ class AssetsTagLib {
 		contents.replaceAll(~/url\(['"]([^'"]+)['"]\)/) { String entireMatch, String uri ->
 
 			//TODO: Find a better way to clean the url
-			uri = uri.replaceAll(~/\??#.*$/, '') //remove extraneous stuff from the url
+			uri =  uri.replaceAll(~/\?.*\u0024|#.*\u0024|\.\.?\//, '') //remove extraneous stuff from the url
 
 			if(isAssetPath(uri)){
 				"url('${getDataURI(uri)}')"
