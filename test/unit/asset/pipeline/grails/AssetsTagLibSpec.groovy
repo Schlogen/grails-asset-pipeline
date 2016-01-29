@@ -105,7 +105,7 @@ class AssetsTagLibSpec extends Specification {
 			tagLib.stylesheet(href: assetSrc, bundle: 'true') == '<link rel="stylesheet" href="/assets/asset-pipeline/test/test.css"/>'
 	}
 
-	void "should return stylesheet link tag with seperated files when debugMode is on"() {
+	void "should return stylesheet link tag with separated files when debugMode is on"() {
 		given:
 			grailsApplication.config.grails.assets.bundle = false
 			grailsApplication.config.grails.assets.allowDebugParam = true
@@ -119,11 +119,40 @@ class AssetsTagLibSpec extends Specification {
 			output == '<link rel="stylesheet" href="/assets/asset-pipeline/test/test.css?compile=false" />' + LINE_BREAK + '<link rel="stylesheet" href="/assets/asset-pipeline/test/test2.css?compile=false" />' + LINE_BREAK
 	}
 
+	void "should return style tag with style inline"() {
+		given:
+			/*grailsApplication.config.grails.assets.bundle = false
+			grailsApplication.config.grails.assets.allowDebugParam = true
+			params."_debugAssets" = "y"*/
+			final def assetSrc = "asset-pipeline/test/test.css"
+			final def output
+
+		when:
+			output = tagLib.inlineStylesheet(src: assetSrc)
+		then:
+			output.toString() == '<style type="text/css">/*\n' +
+					'*= require_self\n' +
+					'*= require test2\n' +
+					'*/\n' +
+					'#logo {\n' +
+					'\tbackground: url(\'../../../images/grails_logo.png\');\n' +
+					'}\n' +
+					'\n' +
+					'/*We have a second identical url call to verify caching in integration test*/\n' +
+					'.logo {\n' +
+					'\tbackground: url(\'../../../images/grails_logo.png\');\n' +
+					'}\n' +
+					'\n' +
+					'.microsoft {\n' +
+					'\tbehavior: url(#default#VML);\n' +
+					'}</style>'
+	}
+
 	void "should return image tag"() {
 		given:
 			final def assetSrc = "grails_logo.png"
 		expect:
-			tagLib.image(src: assetSrc, width:'200',height:200) == '<img src="/assets/grails_logo.png" width="200" height="200"/>'
+			tagLib.image(src: assetSrc, width:'200',height:200).toString() == '<img src="/assets/grails_logo.png" width="200" height="200"/>'
 	}
 
 	void "should return image tag with absolute path"() {
@@ -202,5 +231,19 @@ class AssetsTagLibSpec extends Specification {
 			applyTemplate('<asset:script type="text/javascript"><g:if test="${isTrue}">alert("foo");</g:if></asset:script>', [isTrue: true])
 		then:
 			applyTemplate("<asset:deferredScripts/>") == '<script type="text/javascript">alert("foo");</script>'
+	}
+
+	void "should return a valid data uri for asset at the given uri"(){
+		given:
+			final def fileUri = "asset-pipeline/test/test.css"
+		expect:
+			tagLib.getDataURI(fileUri) == 'data:text/css;base64,000=='
+	}
+
+	void "should return expanded contents for asset at the given uri"(){
+		given:
+			final def fileUri = "asset-pipeline/test/test.css"
+		expect:
+			tagLib.expandInline(fileUri) == ''
 	}
 }

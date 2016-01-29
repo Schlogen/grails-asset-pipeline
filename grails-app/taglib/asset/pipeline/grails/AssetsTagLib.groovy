@@ -3,7 +3,11 @@ package asset.pipeline.grails
 
 import asset.pipeline.AssetHelper
 import asset.pipeline.AssetPipeline
+import com.lowagie.text.pdf.codec.Base64
+import groovy.transform.CompileStatic
+import org.codehaus.groovy.grails.web.mime.MimeType
 import org.codehaus.groovy.grails.web.util.GrailsPrintWriter
+import org.springframework.core.io.Resource
 
 
 class AssetsTagLib {
@@ -15,7 +19,9 @@ class AssetsTagLib {
 
 
 	def assetProcessorService
+	AssetResourceLocator assetResourceLocator
 	def grailsApplication
+	def grailsMimeUtility
 
 
 	/**
@@ -131,11 +137,67 @@ class AssetsTagLib {
 		}
 	}
 
-	boolean isAssetPath(src) {
+	Closure inlineStylesheet = { Map attrs ->
+		final GrailsPrintWriter outPw = out
+		element(attrs, 'css', 'text/css', Objects.toString(attrs.remove('href'), null)) {final String src, final String queryString, final outputAttrs, final String endOfLine ->
+			outPw << '<style type="text/css" ' << paramsToHtmlAttr(outputAttrs) << '>'  << expandInline(src) << '</style>'
+		}
+	}
+
+	Closure inlineScript = { Map attrs ->
+		final GrailsPrintWriter outPw = out
+		attrs.remove('href')
+		element(attrs, 'js', 'application/javascript', null) {final String src, final String queryString, final outputAttrs, final String endOfLine ->
+			outPw << '<script type="text/javascript"' << paramsToHtmlAttr(outputAttrs) << '>' << expandInline(src) << '</script>'
+		}
+	}
+
+	Closure inlineImage = { Map attrs ->
+		String src = attrs.remove('src')
+		String absolute = attrs.remove('absolute')
+		out << "<img src=\"${getDataURI(src)}\" ${paramsToHtmlAttr(attrs)}/>"
+	}
+
+	boolean isAssetPath(String src) {
 		assetProcessorService.isAssetPath(src)
 	}
 
-	private paramsToHtmlAttr(attrs) {
+	String getDataURI(String uri, String mime = null){
+		Resource asset = assetResourceLocator.findAssetForURI(uri)
+		MimeType mimeType = grailsMimeUtility.getMimeTypeForURI(uri)
+		mime = mime ?: mimeType?.name
+		if(mime){
+			mime+=';'
+		} else {
+			//throw warning. Most things work without MIME type, but not all
+		}
+
+		//if mime is text-like, then expand inline assets
+		if(mime in ['']){
+			String fileText = expandInline(asset.inputStream.text)
+			"data:${mime?:''}base64,${fileText.encodeBase64()}"
+		} else {
+			"data:${mime?:''}base64,${asset.inputStream.encodeAsBase64()}"
+		}
+
+	}
+
+	String expandInline(String contents){
+		//use a better regex than this. This one incorrectly parses url('"); and etc.
+		contents.replaceAll(~/url\(['"]([^'"]+)['"]\)/) { String entireMatch, String uri ->
+
+			//TODO: Find a better way to clean the url
+			uri = uri.replaceAll(~/\??#.*$/, '') //remove extraneous stuff from the url
+
+			if(isAssetPath(uri)){
+				"url('${getDataURI(uri)}')"
+			} else {
+				entireMatch
+			}
+		}
+	}
+
+	private paramsToHtmlAttr(Map attrs) {
 		attrs.collect {key, value -> "${key}=\"${value.toString().replace('"', '\\"')}\""}?.join(' ')
 	}
 }
