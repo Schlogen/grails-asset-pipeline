@@ -141,22 +141,10 @@ class AssetsTagLibSpec extends Specification {
 		when:
 			output = tagLib.inlineStylesheet(src: assetSrc)
 		then:
-			output.toString() == '<style type="text/css">/*\n' +
-					'*= require_self\n' +
-					'*= require test2\n' +
-					'*/\n' +
-					'#logo {\n' +
-					'\tbackground: url(\'../../../images/grails_logo.png\');\n' +
-					'}\n' +
-					'\n' +
-					'/*We have a second identical url call to verify caching in integration test*/\n' +
-					'.logo {\n' +
-					'\tbackground: url(\'../../../images/grails_logo.png\');\n' +
-					'}\n' +
-					'\n' +
-					'.microsoft {\n' +
-					'\tbehavior: url(#default#VML);\n' +
-					'}</style>'
+			String inlined = output.toString()
+			inlined.startsWith('<style type="text/css" >')
+			inlined.contains("background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKMAAAArCAYAAAFjiAijAAAABGdBTUEAAK")
+			inlined.contains('</style>')
 	}
 
 	void "should return image tag"() {
@@ -253,12 +241,28 @@ class AssetsTagLibSpec extends Specification {
 
 	void "should return expanded contents for asset at the given uri"(){
 		given:
-			final def css = "url('asset-pipeline/test/test.css')"
+			final def css = "url('grails_logo.png')"
 		expect:
-			String contents = tagLib.expandInline(css)
-            contents.startsWith("url('data:text/css;base64,LyoNCio9IHJlcXVpcmVfc2VsZg0KKj0gcmVxdWlyZSB0ZXN0Mg0KKi8")
+			String contents = tagLib.expandContents(css)
+            contents.startsWith("url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUg")
             //lots more data
-            contents.endsWith("9CmgzIHsNCgljb2xvcjpibGFjazsNCn0K')")
+            contents.endsWith("9oR1nMRqSe5SP8BuRz12PRbUyoAAAAASUVORK5CYII=')")
+	}
+
+	void "should return original contents when given uri is not an asset"(){
+		given:
+			final def css = "url('http://example.com/test.png')"
+		expect:
+			String contents = tagLib.expandContents(css)
+            contents == "url('http://example.com/test.png')"
+	}
+
+	void "should return original contents when given url() call is invalid"(){
+		given:
+			final def css = "url(\"http://example.com/test.png')"
+		expect:
+			String contents = tagLib.expandContents(css)
+            contents == "url(\"http://example.com/test.png')"
 	}
 
     void "should return inline script tag"() {

@@ -3,7 +3,6 @@ package asset.pipeline.grails
 
 import asset.pipeline.AssetHelper
 import asset.pipeline.AssetPipeline
-import groovy.transform.CompileStatic
 import org.codehaus.groovy.grails.web.mime.MimeType
 import org.codehaus.groovy.grails.web.mime.MimeUtility
 import org.codehaus.groovy.grails.web.util.GrailsPrintWriter
@@ -141,7 +140,7 @@ class AssetsTagLib {
     Closure inlineStylesheet = { Map attrs ->
         final GrailsPrintWriter outPw = out
         Resource asset = assetResourceLocator.findAssetForURI(attrs.remove('src') as String)
-        outPw << '<style type="text/css" ' << paramsToHtmlAttr(attrs) << '>'  << expandInline(asset.inputStream.text) << '</style>'
+        outPw << '<style type="text/css" ' << paramsToHtmlAttr(attrs) << '>'  << expandContents(asset.inputStream.text) << '</style>'
     }
 
     Closure inlineJavascript = { Map attrs ->
@@ -172,19 +171,12 @@ class AssetsTagLib {
             //throw warning. Most things work without MIME type, but not all
         }
 
-        //if mime is text-like, then expand inline assets
-        if(mime in ['text/css;']){
-            String fileText = expandInline(asset.inputStream.text)
-            "data:${mime?:''}base64,${fileText.bytes.encodeBase64()}"
-        } else {
-            "data:${mime?:''}base64,${asset.inputStream.bytes.encodeAsBase64()}"
-        }
+        "data:${mime?:''}base64,${asset.inputStream.bytes.encodeBase64()}"
 
     }
 
-    String expandInline(String contents){
-        //use a better regex than this. This one incorrectly parses url('"); and etc.
-        contents.replaceAll(~/url\(['"]([^'"]+)['"]\)/) { String entireMatch, String uri ->
+    String expandContents(String contents) {
+        contents.replaceAll(~/url\((['"])([^'"]+)\1\)/) { String entireMatch, String quoteType, String uri  ->
 
             //TODO: Find a better way to clean the url
             uri =  uri.replaceAll(~/\?.*\u0024|#.*\u0024|\.\.?\//, '') //remove extraneous stuff from the url
